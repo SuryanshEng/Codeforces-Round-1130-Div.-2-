@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+using namespace std;
+static char buf[1<<25];
+int main(){
+    size_t len=fread(buf,1,sizeof buf,stdin); buf[len]=0;
+    char*p=buf;
+    auto rd=[&]{while(*p<'0')p++;int x=0;while(*p>='0')x=x*10+*p++-'0';return x;};
+    int t=rd();
+    string out;
+    while(t--){
+        int n=rd();
+        vector<int> U(n-1),V(n-1),st(n+2,0);
+        for(int i=0;i<n-1;i++){U[i]=rd();V[i]=rd();st[U[i]+1]++;st[V[i]+1]++;}
+        vector<int> deg(n+1);
+        for(int i=1;i<=n;i++)deg[i]=st[i+1];
+        for(int i=1;i<=n+1;i++)st[i]+=st[i-1];
+        vector<int> adj(2*(n-1)),pos(st);
+        for(int i=0;i<n-1;i++){adj[pos[U[i]]++]=V[i];adj[pos[V[i]]++]=U[i];}
+        vector<int> ord{1},par(n+1,0),cl(n+1,0),all(n+1,0);
+        ord.reserve(n);
+        for(int i=0;i<n;i++){
+            int v=ord[i];
+            for(int j=st[v];j<st[v+1];j++){int c=adj[j];if(c!=par[v]){par[c]=v;ord.push_back(c);}}
+        }
+        vector<char> down(n+1),up(n+1,1);
+        for(int i=n-1;i>=0;i--){
+            int v=ord[i];
+            down[v]=cl[v]>0?1:(deg[v]&1);
+            if(par[v]&&!down[v])cl[par[v]]++;
+        }
+        for(int i=0;i<n;i++){
+            int v=ord[i];
+            all[v]=cl[v]+((par[v]&&!up[v])?1:0);
+            for(int j=st[v];j<st[v+1];j++){
+                int c=adj[j];
+                if(c==par[v])continue;
+                up[c]=(all[v]-!down[c])>0?1:(deg[v]&1);
+            }
+        }
+        vector<int> ans;
+        for(int v=1;v<=n;v++)if(!all[v]&&!(deg[v]&1))ans.push_back(v);
+        if(ans.empty())out+="Alice\n";
+        else{
+            out+="Bob\n"+to_string(ans.size())+"\n";
+            for(int x:ans){out+=to_string(x);out+=' ';}
+            out+='\n';
+        }
+    }
+    fputs(out.c_str(),stdout);
+}
