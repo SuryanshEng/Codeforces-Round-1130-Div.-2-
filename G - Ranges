@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+using namespace std;
+static char buf[1<<25];
+int P,Q;
+vector<int> hd,nx,eid,par,sz,stk,EU,EV;
+int ec,cnt;
+void add(int o,int lo,int hi,int s,int e,int id){
+    if(s<=lo&&hi<=e){eid[ec]=id;nx[ec]=hd[o];hd[o]=ec++;return;}
+    int mid=(lo+hi)>>1;
+    if(s<=mid)add(o*2,lo,mid,s,e,id);
+    if(e>mid)add(o*2+1,mid+1,hi,s,e,id);
+}
+vector<int> ans;
+int fd(int x){while(par[x]!=x)x=par[x];return x;}
+void dfs(int o,int lo,int hi){
+    size_t sv=stk.size();
+    for(int j=hd[o];j!=-1;j=nx[j]){
+        int a=fd(EU[eid[j]]),b=fd(EV[eid[j]]);
+        if(a==b)continue;
+        if(sz[a]<sz[b])swap(a,b);
+        par[b]=a;sz[a]+=sz[b];stk.push_back(b);cnt++;
+    }
+    if(lo==hi)ans[lo]=cnt;
+    else{int mid=(lo+hi)>>1;dfs(o*2,lo,mid);dfs(o*2+1,mid+1,hi);}
+    while(stk.size()>sv){
+        int b=stk.back();stk.pop_back();
+        int a=par[b];sz[a]-=sz[b];par[b]=b;cnt--;
+    }
+}
+int main(){
+    size_t len=fread(buf,1,sizeof buf-1,stdin);buf[len]=0;
+    char*p=buf;
+    auto rd=[&]{while(*p<'0')p++;int x=0;while(*p>='0')x=x*10+*p++-'0';return x;};
+    int t=rd();
+    string out;
+    while(t--){
+        int n=rd(),m=rd(),q=rd();
+        EU.assign(m+q,0);EV.assign(m+q,0);
+        vector<int> cur(m+1),st(m+1,0);
+        int ne=0;
+        for(int i=1;i<=m;i++){
+            int l=rd(),r=rd();
+            EU[ne]=l-1;EV[ne]=r;cur[i]=ne++;
+        }
+        int T=q+1;
+        hd.assign(4*T,-1);
+        nx.assign((size_t)(m+q)*20+5,0);eid.assign((size_t)(m+q)*20+5,0);ec=0;
+        for(int j=1;j<=q;j++){
+            int pp=rd(),l=rd(),r=rd();
+            add(1,0,q,st[pp],j-1,cur[pp]);
+            EU[ne]=l-1;EV[ne]=r;cur[pp]=ne++;st[pp]=j;
+        }
+        for(int i=1;i<=m;i++)add(1,0,q,st[i],q,cur[i]);
+        par.resize(n+1);sz.assign(n+1,1);
+        iota(par.begin(),par.end(),0);
+        stk.clear();cnt=0;ans.assign(T,0);
+        dfs(1,0,q);
+        for(int i=0;i<T;i++){out+=to_string(ans[i]);out+='\n';}
+    }
+    fputs(out.c_str(),stdout);
+}
